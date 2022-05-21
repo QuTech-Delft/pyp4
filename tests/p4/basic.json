@@ -1,0 +1,673 @@
+{
+  "header_types" : [
+    {
+      "name" : "scalars_0",
+      "id" : 0,
+      "fields" : [
+        ["tmp", 1, false],
+        ["_padding_0", 7, false]
+      ]
+    },
+    {
+      "name" : "standard_metadata",
+      "id" : 1,
+      "fields" : [
+        ["ingress_port", 9, false],
+        ["egress_spec", 9, false],
+        ["egress_port", 9, false],
+        ["instance_type", 32, false],
+        ["packet_length", 32, false],
+        ["enq_timestamp", 32, false],
+        ["enq_qdepth", 19, false],
+        ["deq_timedelta", 32, false],
+        ["deq_qdepth", 19, false],
+        ["ingress_global_timestamp", 48, false],
+        ["egress_global_timestamp", 48, false],
+        ["mcast_grp", 16, false],
+        ["egress_rid", 16, false],
+        ["checksum_error", 1, false],
+        ["parser_error", 32, false],
+        ["priority", 3, false],
+        ["_padding", 3, false]
+      ]
+    },
+    {
+      "name" : "action_t",
+      "id" : 2,
+      "fields" : [
+        ["action_id", 32, false]
+      ]
+    },
+    {
+      "name" : "test_t",
+      "id" : 3,
+      "fields" : [
+        ["value", 8, false]
+      ]
+    }
+  ],
+  "headers" : [
+    {
+      "name" : "scalars",
+      "id" : 0,
+      "header_type" : "scalars_0",
+      "metadata" : true,
+      "pi_omit" : true
+    },
+    {
+      "name" : "standard_metadata",
+      "id" : 1,
+      "header_type" : "standard_metadata",
+      "metadata" : true,
+      "pi_omit" : true
+    },
+    {
+      "name" : "act",
+      "id" : 2,
+      "header_type" : "action_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "test",
+      "id" : 3,
+      "header_type" : "test_t",
+      "metadata" : false,
+      "pi_omit" : true
+    }
+  ],
+  "header_stacks" : [],
+  "header_union_types" : [],
+  "header_unions" : [],
+  "header_union_stacks" : [],
+  "field_lists" : [],
+  "errors" : [
+    ["NoError", 0],
+    ["PacketTooShort", 1],
+    ["NoMatch", 2],
+    ["StackOutOfBounds", 3],
+    ["HeaderTooShort", 4],
+    ["ParserTimeout", 5],
+    ["ParserInvalidArgument", 6]
+  ],
+  "enums" : [],
+  "parsers" : [
+    {
+      "name" : "parser",
+      "id" : 0,
+      "init_state" : "start",
+      "parse_states" : [
+        {
+          "name" : "start",
+          "id" : 0,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "act"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000",
+              "mask" : null,
+              "next_state" : null
+            },
+            {
+              "type" : "default",
+              "value" : null,
+              "mask" : null,
+              "next_state" : "parse_test"
+            }
+          ],
+          "transition_key" : [
+            {
+              "type" : "field",
+              "value" : ["act", "action_id"]
+            }
+          ]
+        },
+        {
+          "name" : "parse_test",
+          "id" : 1,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "test"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "type" : "default",
+              "value" : null,
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : []
+        }
+      ]
+    }
+  ],
+  "parse_vsets" : [],
+  "deparsers" : [
+    {
+      "name" : "deparser",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "basic.p4",
+        "line" : 142,
+        "column" : 8,
+        "source_fragment" : "MyDeparser"
+      },
+      "order" : ["act", "test"],
+      "primitives" : []
+    }
+  ],
+  "meter_arrays" : [],
+  "counter_arrays" : [],
+  "register_arrays" : [],
+  "calculations" : [],
+  "learn_lists" : [],
+  "actions" : [
+    {
+      "name" : "NoAction",
+      "id" : 0,
+      "runtime_data" : [],
+      "primitives" : []
+    },
+    {
+      "name" : "MyIngress.act_add_header",
+      "id" : 1,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "add_header",
+          "parameters" : [
+            {
+              "type" : "header",
+              "value" : "test"
+            }
+          ],
+          "source_info" : {
+            "filename" : "basic.p4",
+            "line" : 70,
+            "column" : 8,
+            "source_fragment" : "hdr.test.setValid()"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "MyIngress.act_remove_header",
+      "id" : 2,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "remove_header",
+          "parameters" : [
+            {
+              "type" : "header",
+              "value" : "test"
+            }
+          ],
+          "source_info" : {
+            "filename" : "basic.p4",
+            "line" : 74,
+            "column" : 8,
+            "source_fragment" : "hdr.test.setInvalid()"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "MyIngress.act_assign",
+      "id" : 3,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["test", "value"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0xaa"
+            }
+          ],
+          "source_info" : {
+            "filename" : "basic.p4",
+            "line" : 78,
+            "column" : 8,
+            "source_fragment" : "hdr.test.value = 0xaa"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "MyIngress.act_extern",
+      "id" : 4,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "mark_to_drop",
+          "parameters" : [
+            {
+              "type" : "header",
+              "value" : "standard_metadata"
+            }
+          ],
+          "source_info" : {
+            "filename" : "basic.p4",
+            "line" : 82,
+            "column" : 8,
+            "source_fragment" : "mark_to_drop(standard_metadata)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "MyIngress.act_extern_keyword",
+      "id" : 5,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "tmp"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "b2d",
+                  "left" : null,
+                  "right" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "==",
+                      "left" : {
+                        "type" : "field",
+                        "value" : ["test", "value"]
+                      },
+                      "right" : {
+                        "type" : "hexstr",
+                        "value" : "0xaa"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "basic.p4",
+            "line" : 86,
+            "column" : 15,
+            "source_fragment" : "hdr.test.value == 0xaa"
+          }
+        },
+        {
+          "op" : "assert",
+          "parameters" : [
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "b2d",
+                  "left" : null,
+                  "right" : {
+                    "type" : "expression",
+                    "value" : {
+                      "op" : "d2b",
+                      "left" : null,
+                      "right" : {
+                        "type" : "field",
+                        "value" : ["scalars", "tmp"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "basic.p4",
+            "line" : 86,
+            "column" : 8,
+            "source_fragment" : "assert(hdr.test.value == 0xaa)"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["test", "value"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0xbb"
+            }
+          ],
+          "source_info" : {
+            "filename" : "basic.p4",
+            "line" : 87,
+            "column" : 8,
+            "source_fragment" : "hdr.test.value = 0xbb"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "basic113",
+      "id" : 6,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["standard_metadata", "egress_spec"]
+            },
+            {
+              "type" : "field",
+              "value" : ["standard_metadata", "ingress_port"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "basic.p4",
+            "line" : 113,
+            "column" : 12,
+            "source_fragment" : "standard_metadata.egress_spec = standard_metadata.ingress_port"
+          }
+        }
+      ]
+    }
+  ],
+  "pipelines" : [
+    {
+      "name" : "ingress",
+      "id" : 0,
+      "source_info" : {
+        "filename" : "basic.p4",
+        "line" : 64,
+        "column" : 8,
+        "source_fragment" : "MyIngress"
+      },
+      "init_table" : "node_2",
+      "tables" : [
+        {
+          "name" : "MyIngress.operations",
+          "id" : 0,
+          "source_info" : {
+            "filename" : "basic.p4",
+            "line" : 90,
+            "column" : 10,
+            "source_fragment" : "operations"
+          },
+          "key" : [
+            {
+              "match_type" : "exact",
+              "name" : "hdr.act.action_id",
+              "target" : ["act", "action_id"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 5,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [1, 2, 3, 4, 5, 0],
+          "actions" : ["MyIngress.act_add_header", "MyIngress.act_remove_header", "MyIngress.act_assign", "MyIngress.act_extern", "MyIngress.act_extern_keyword", "NoAction"],
+          "base_default_next" : "tbl_basic113",
+          "next_tables" : {
+            "MyIngress.act_add_header" : "tbl_basic113",
+            "MyIngress.act_remove_header" : "tbl_basic113",
+            "MyIngress.act_assign" : "tbl_basic113",
+            "MyIngress.act_extern" : "tbl_basic113",
+            "MyIngress.act_extern_keyword" : "tbl_basic113",
+            "NoAction" : "tbl_basic113"
+          },
+          "default_entry" : {
+            "action_id" : 0,
+            "action_const" : false,
+            "action_data" : [],
+            "action_entry_const" : false
+          },
+          "entries" : [
+            {
+              "source_info" : {
+                "filename" : "basic.p4",
+                "line" : 102,
+                "column" : 12,
+                "source_fragment" : "0: act_add_header()"
+              },
+              "match_key" : [
+                {
+                  "match_type" : "exact",
+                  "key" : "0x00000000"
+                }
+              ],
+              "action_entry" : {
+                "action_id" : 1,
+                "action_data" : []
+              },
+              "priority" : 1
+            },
+            {
+              "source_info" : {
+                "filename" : "basic.p4",
+                "line" : 103,
+                "column" : 12,
+                "source_fragment" : "1: act_remove_header()"
+              },
+              "match_key" : [
+                {
+                  "match_type" : "exact",
+                  "key" : "0x00000001"
+                }
+              ],
+              "action_entry" : {
+                "action_id" : 2,
+                "action_data" : []
+              },
+              "priority" : 2
+            },
+            {
+              "source_info" : {
+                "filename" : "basic.p4",
+                "line" : 104,
+                "column" : 12,
+                "source_fragment" : "2: act_assign()"
+              },
+              "match_key" : [
+                {
+                  "match_type" : "exact",
+                  "key" : "0x00000002"
+                }
+              ],
+              "action_entry" : {
+                "action_id" : 3,
+                "action_data" : []
+              },
+              "priority" : 3
+            },
+            {
+              "source_info" : {
+                "filename" : "basic.p4",
+                "line" : 105,
+                "column" : 12,
+                "source_fragment" : "3: act_extern()"
+              },
+              "match_key" : [
+                {
+                  "match_type" : "exact",
+                  "key" : "0x00000003"
+                }
+              ],
+              "action_entry" : {
+                "action_id" : 4,
+                "action_data" : []
+              },
+              "priority" : 4
+            },
+            {
+              "source_info" : {
+                "filename" : "basic.p4",
+                "line" : 106,
+                "column" : 12,
+                "source_fragment" : "4: act_extern_keyword()"
+              },
+              "match_key" : [
+                {
+                  "match_type" : "exact",
+                  "key" : "0x00000004"
+                }
+              ],
+              "action_entry" : {
+                "action_id" : 5,
+                "action_data" : []
+              },
+              "priority" : 5
+            }
+          ]
+        },
+        {
+          "name" : "tbl_basic113",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "basic.p4",
+            "line" : 113,
+            "column" : 42,
+            "source_fragment" : "="
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [6],
+          "actions" : ["basic113"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "basic113" : null
+          },
+          "default_entry" : {
+            "action_id" : 6,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        }
+      ],
+      "action_profiles" : [],
+      "conditionals" : [
+        {
+          "name" : "node_2",
+          "id" : 0,
+          "source_info" : {
+            "filename" : "basic.p4",
+            "line" : 111,
+            "column" : 12,
+            "source_fragment" : "hdr.act.isValid()"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "d2b",
+              "left" : null,
+              "right" : {
+                "type" : "field",
+                "value" : ["act", "$valid$"]
+              }
+            }
+          },
+          "false_next" : null,
+          "true_next" : "MyIngress.operations"
+        }
+      ]
+    },
+    {
+      "name" : "egress",
+      "id" : 1,
+      "source_info" : {
+        "filename" : "basic.p4",
+        "line" : 122,
+        "column" : 8,
+        "source_fragment" : "MyEgress"
+      },
+      "init_table" : null,
+      "tables" : [],
+      "action_profiles" : [],
+      "conditionals" : []
+    }
+  ],
+  "checksums" : [],
+  "force_arith" : [],
+  "extern_instances" : [],
+  "field_aliases" : [
+    [
+      "queueing_metadata.enq_timestamp",
+      ["standard_metadata", "enq_timestamp"]
+    ],
+    [
+      "queueing_metadata.enq_qdepth",
+      ["standard_metadata", "enq_qdepth"]
+    ],
+    [
+      "queueing_metadata.deq_timedelta",
+      ["standard_metadata", "deq_timedelta"]
+    ],
+    [
+      "queueing_metadata.deq_qdepth",
+      ["standard_metadata", "deq_qdepth"]
+    ],
+    [
+      "intrinsic_metadata.ingress_global_timestamp",
+      ["standard_metadata", "ingress_global_timestamp"]
+    ],
+    [
+      "intrinsic_metadata.egress_global_timestamp",
+      ["standard_metadata", "egress_global_timestamp"]
+    ],
+    [
+      "intrinsic_metadata.mcast_grp",
+      ["standard_metadata", "mcast_grp"]
+    ],
+    [
+      "intrinsic_metadata.egress_rid",
+      ["standard_metadata", "egress_rid"]
+    ],
+    [
+      "intrinsic_metadata.priority",
+      ["standard_metadata", "priority"]
+    ]
+  ],
+  "program" : "basic.p4",
+  "__meta__" : {
+    "version" : [2, 23],
+    "compiler" : "https://github.com/p4lang/p4c"
+  }
+}

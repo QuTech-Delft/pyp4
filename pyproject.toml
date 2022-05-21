@@ -1,0 +1,15 @@
+[tool.pyright]
+include = [
+  "pyp4",
+  "tests",
+  "examples"
+]
+exclude = [
+  "**/__pycache__"
+]
+venv = "pyp4"
+
+typeCheckingMode = "off"
+
+pythonVersion = "3.8"
+pythonPlatform = "Linux"

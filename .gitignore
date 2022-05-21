@@ -1,0 +1,7 @@
+__pycache__
+.virtualenvs
+.venv
+htmlcov
+.coverage
+*.p4i
+*.egg-info
