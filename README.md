@@ -1,9 +1,9 @@
 # PyP4: P4 for Python
 
 [![pipeline
-status](https://gitlab.tudelft.nl/qp4/pyp4/badges/master/pipeline.svg)](https://gitlab.tudelft.nl/qp4/pyp4/commits/master)
+status](https://gitlab.tudelft.nl/qp4/pyp4/badges/main/pipeline.svg)](https://gitlab.tudelft.nl/qp4/pyp4/commits/main)
 [![coverage
-report](https://gitlab.tudelft.nl/qp4/pyp4/badges/master/coverage.svg)](https://gitlab.tudelft.nl/qp4/pyp4/commits/master)
+report](https://gitlab.tudelft.nl/qp4/pyp4/badges/main/coverage.svg)](https://gitlab.tudelft.nl/qp4/pyp4/commits/main)
 
 ## Introduction
 
