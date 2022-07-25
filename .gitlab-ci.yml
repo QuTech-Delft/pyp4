@@ -18,7 +18,7 @@ before_script:
 
 stages:
   - prepare
-  - tests
+  - test
   - lint
 
 # The prepare job exists to ensure the cache exists for the subsequent jobs.
@@ -32,35 +32,38 @@ prepare:
     - if [ ! -d venv ]; then python3 -m virtualenv venv; fi
     - source venv/bin/activate
   script:
-    - make test-deps
+    - make dev-requirements
   cache:
     policy: pull-push
 
-test:
+examples:
   extends: .default
-  stage: tests
+  stage: test
+  script: make examples
+
+tests:
+  extends: .default
+  stage: test
   script: make tests COVREP=
   artifacts:
     paths:
       - .coverage
     expire_in: 1 week
 
-examples:
-  extends: .default
-  stage: tests
-  script: make examples
-
 coverage:
   extends: .default
   stage: lint
   script: make coverage MINCOV=100
+  needs: ["tests"]
 
 flake8:
   extends: .default
   stage: lint
   script: make flake8
+  needs: ["prepare"]
 
 pylint:
   extends: .default
   stage: lint
   script: make pylint
+  needs: ["prepare"]

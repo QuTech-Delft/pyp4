@@ -1,7 +1,5 @@
 __pycache__
-.virtualenvs
-.venv
-htmlcov
+.pytest_cache
 .coverage
+htmlcov
 *.p4i
-*.egg-info

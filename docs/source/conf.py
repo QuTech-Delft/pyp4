@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'PyP4'
-copyright = '2022, Wojciech Kozlowski'
+copyright = '2022 QuTech (TUDelft and TNO)'
 author = 'Wojciech Kozlowski'
 
 # The full version, including alpha/beta/rc tags
