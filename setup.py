@@ -10,7 +10,7 @@ README = (HERE / "README.md").read_text()
 # This call to setup() does all the work
 setuptools.setup(
     name="pyp4",
-    version="0.0.0",
+    version="0.1.0",
     author="Wojciech Kozlowski",
     author_email="w.kozlowski@tudelft.nl",
     packages=["pyp4", "pyp4.processors"],

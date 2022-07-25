@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2022-07-25
+
 - Initial release split from [`netsquid-qp4/europ4-2020`](https://gitlab.com/softwarequtech/netsquid-snippets/netsquid-qp4/-/tree/europ4-2020),
   but:
   - It only contains non-simulator specific code.
