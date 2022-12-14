@@ -64,12 +64,12 @@ exclude_lines = [
 
 [tool.pyright]
 include = [
-  "pyp4",
-  "tests",
-  "examples"
+    "pyp4",
+    "tests",
+    "examples"
 ]
 exclude = [
-  "**/__pycache__"
+    "**/__pycache__"
 ]
 
 typeCheckingMode = "off"
