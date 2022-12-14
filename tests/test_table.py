@@ -2,7 +2,7 @@
 
 import pytest
 
-from pyp4.table import Conditional, Table
+from pyp4.table import Conditional, _ApplyResult, _ActionRun
 from pyp4.processor import Processor
 
 
@@ -84,36 +84,36 @@ def test_conditionals(conditionals, bus):
 
 def test_next_table(ethernet_fib, ipv4_fib):
     assert ethernet_fib.next_table(
-        Table.ApplyResult(hit=True,
-                          action_run=Table.ActionRun(
-                              action_id=0,
-                              action_name="ProcessIngress.act_hit",
-                              action_data=[],
-                          ))
+        _ApplyResult(hit=True,
+                     action_run=_ActionRun(
+                         action_id=0,
+                         action_name="ProcessIngress.act_hit",
+                         action_data=[],
+                     ))
     ) == "node_5"
     assert ethernet_fib.next_table(
-        Table.ApplyResult(hit=False,
-                          action_run=Table.ActionRun(
-                              action_id=0,
-                              action_name="ProcessIngress.act_miss",
-                              action_data=[],
-                          ))
+        _ApplyResult(hit=False,
+                     action_run=_ActionRun(
+                         action_id=0,
+                         action_name="ProcessIngress.act_miss",
+                         action_data=[],
+                     ))
     ) == "ProcessIngress.ethernet_ethertype_fib"
     assert ipv4_fib.next_table(
-        Table.ApplyResult(hit=True,
-                          action_run=Table.ActionRun(
-                              action_id=0,
-                              action_name="ProcessIngress.process_ingress_ipv4.act_hit",
-                              action_data=[],
-                          ))
+        _ApplyResult(hit=True,
+                     action_run=_ActionRun(
+                         action_id=0,
+                         action_name="ProcessIngress.process_ingress_ipv4.act_hit",
+                         action_data=[],
+                     ))
     ) == "ProcessIngress.process_ingress_ipv4.ttl_tbl"
     assert ipv4_fib.next_table(
-        Table.ApplyResult(hit=False,
-                          action_run=Table.ActionRun(
-                              action_id=0,
-                              action_name="NoAction",
-                              action_data=[],
-                          ))
+        _ApplyResult(hit=False,
+                     action_run=_ActionRun(
+                         action_id=0,
+                         action_name="NoAction",
+                         action_data=[],
+                     ))
     ) == "tbl_process_ingress_ipv4_act_miss"
 
 

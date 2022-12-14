@@ -33,12 +33,8 @@ required. All architectures in this repository can be compiled using the mainlin
 
 ## Docs
 
-To build the docs, enter the [`docs`](docs) directory and run
-```
-make html
-```
-The resulting documentation can be read by opening
-[`docs/build/html/index.html`](docs/build/html/index.html) in a browser.
+To view the documentation, run `make html` in the [docs](docs) directory and open
+`docs/build/html/index.html`.
 
 ## Logging
 
@@ -100,27 +96,6 @@ logger.addHandler(handler)
 ```
 Note that we explicitly use `logging.getLogger` instead of `logging.basicConfig` as it's easier to
 reuse this snippet to make use of the logger hierarchy in PyP4.
-
-## Integrations with simulators
-
-### Existing integrations
-
-PyP4 has so far been integrated with:
-- [NetSquid](https://gitlab.tudelft.nl/qp4/netsquid-p4)
-
-### Guide for integration
-
-*TODO*
-
-## Running tests
-
-To run all unit tests, run
-```
-make tests
-```
-
-This package uses pytest for unit testing so if you need more fine-grained control over which tests
-to run, just skip the Makefile and execute call pytest directly.
 
 ## Acknowledgements
 

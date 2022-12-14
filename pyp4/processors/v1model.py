@@ -2,9 +2,13 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Any, Dict, List, Tuple, Union
 
 from pyp4 import PacketIO
-from pyp4.packet import FixedInt
+from pyp4.block import Block
+from pyp4.deparser import Deparser
+from pyp4.packet import BinaryPacket, Bus, FixedInt, Header, HeaderStack
+from pyp4.parser import Parser
 from pyp4.process import Process
 from pyp4.processor import Processor
 
@@ -16,39 +20,39 @@ class V1ModelProcessor(Processor):
 
     Parameters
     ----------
-    runtime : `pyp4.processors.v1model.V1ModelRuntimeAbc`
+    runtime
         The runtime instance for the V1Model.
 
     """
 
-    def __init__(self, runtime):
+    def __init__(self, runtime: 'V1ModelRuntimeAbc'):
         # This processor requires a runtime
         assert runtime is not None
         super().__init__(runtime)
 
     @property
-    def __parser(self):
+    def __parser(self) -> Parser:
         return self._process.parsers["parser"]
 
     @property
-    def __ingress(self):
+    def __ingress(self) -> Block:
         return self._process.blocks["ingress"]
 
     @property
-    def __egress(self):
+    def __egress(self) -> Block:
         return self._process.blocks["egress"]
 
     @property
-    def __deparser(self):
+    def __deparser(self) -> Deparser:
         return self._process.deparsers["deparser"]
 
     @staticmethod
-    def __check_field(field_name, standard_metadata):
+    def __check_field(field_name: str, standard_metadata: Header) -> None:
         if field_name not in standard_metadata:
             raise ValueError(f"Field {field_name} was not provided in standard_metadata")
 
     @staticmethod
-    def __initialise_metadata(bus, port_in_meta):
+    def __initialise_metadata(bus: Bus, port_in_meta: 'V1ModelPortMeta') -> None:
         standard_metadata = bus.metadata["standard_metadata"]
 
         # Check the provided standard_metadata.
@@ -61,19 +65,19 @@ class V1ModelProcessor(Processor):
         # Initialise certain fields to architecture-specific values.
         standard_metadata["egress_spec"].set_max_val()
 
-    def __ingress_process(self, bus):
+    def __ingress_process(self, bus: Bus) -> None:
         bus.metadata["standard_metadata"]["ingress_global_timestamp"].val = int(
             self._runtime.time())
         self.__ingress.process(bus)
 
     @staticmethod
-    def __replication(bus):
+    def __replication(bus: Bus) -> None:
         bus_list = []
         if not bus.metadata["standard_metadata"]["egress_spec"].is_max_val():
             bus_list.append(bus)
         return bus_list
 
-    def __egress_process(self, bus_list):
+    def __egress_process(self, bus_list: List[Bus]) -> None:
         for bus in bus_list:
             bus.metadata["standard_metadata"]["egress_port"].val = (
                 bus.metadata["standard_metadata"]["egress_spec"].val)
@@ -86,7 +90,9 @@ class V1ModelProcessor(Processor):
                 bus.packet.clear()
 
     @staticmethod
-    def __emit(bus_packet_out_list):
+    def __emit(
+            bus_packet_out_list: List[Tuple[Bus, Union[BinaryPacket, HeaderStack]]],
+    ) -> List[Tuple['V1ModelPortMeta', Union[BinaryPacket, HeaderStack]]]:
         port_packet_out = []
         for bus, packet_out in bus_packet_out_list:
             if packet_out:
@@ -97,21 +103,25 @@ class V1ModelProcessor(Processor):
 
         return port_packet_out
 
-    def input(self, port_in_meta, packet_in):
+    def input(
+            self,
+            port_in_meta: 'V1ModelPortMeta',
+            packet_in: Union[BinaryPacket, HeaderStack],
+    ) -> List[Tuple['V1ModelPortMeta', Union[BinaryPacket, HeaderStack]]]:
         """Process an incoming packet.
 
         The input packet is consumed and the output packets are brand new object.
 
         Parameters
         ----------
-        port_in_meta : `pyp4.processors.v1model.V1ModelPortMeta`
+        port_in_meta
             Input port metadata.
-        packet_in : `<process specific Packet>`
+        packet_in
             The input packet.
 
         Returns
         -------
-        list of tuple of (`pyp4.processors.v1model.V1ModelPortMeta`, `<process specific Packet`)
+        :
             One tuple of the output port metadata and the packet for each output packet
 
         """
@@ -162,8 +172,14 @@ class V1ModelProcessor(Processor):
 
 @dataclass
 class V1ModelPortMeta:
-    """V1Model port metadata."""
+    """V1Model port metadata.
 
+    Parameters
+    ----------
+    standard_metadata
+        The V1Model standard metadata as a dictionary.
+
+    """
     standard_metadata: dict
 
 
@@ -171,12 +187,12 @@ class V1ModelRuntimeAbc(ABC):
     """The abstract base class for a V1Model runtime."""
 
     @abstractmethod
-    def time(self):
+    def time(self) -> int:
         """Get the simulated time.
 
         Returns
         -------
-        `int`
+        :
             The current time on the device in microseconds. The clock must be set to 0 every time
             the switch starts.
 
@@ -189,91 +205,91 @@ class V1ModelExtern:
 
     Parameters
     ----------
-    program : dict
+    program
         The program in BM JSON format.
 
     """
 
-    def __init__(self, program):
+    def __init__(self, program: Dict):
         self.__registers = {reg["name"]: Register(reg) for reg in program["register_arrays"]}
 
     @staticmethod
-    def extern_assert(val):
+    def extern_assert(val: FixedInt) -> None:
         """Execute the assert extern.
 
         Parameters
         ----------
-        val : `pyp4.packet.FixedInt`
+        val
             The value to be asserted.
 
         """
         assert bool(val)
 
     @staticmethod
-    def assume(val):
+    def assume(val: FixedInt) -> None:
         """Execute the assume extern.
 
         Outside of formal verification tools, assume is equivalent to and assert.
 
         Parameters
         ----------
-        val : `pyp4.packet.FixedInt`
+        val
             The value to be assumed.
 
         """
         assert bool(val)
 
     @staticmethod
-    def log_msg(msg, data):
+    def log_msg(msg: str, data: Any) -> None:
         """Execute the log_msg extern.
 
         Parameters
         ----------
-        msg : `str`
+        msg
             The message to log.
-        data : `Any`
+        data
             Arguments to print in the string.
 
         """
         print(msg.format(*data))
 
     @staticmethod
-    def mark_to_drop(standard_metadata):
+    def mark_to_drop(standard_metadata: Header) -> None:
         """Execute the mark_to_drop extern.
 
         Parameters
         ----------
-        standard_metadata : `pyp4.packet.Header`
+        standard_metadata
             The standard metadata.
 
         """
         standard_metadata["egress_spec"].set_max_val()
 
-    def register_read(self, lval, register_name, index):
+    def register_read(self, lval: FixedInt, register_name: str, index: FixedInt) -> None:
         """Execute the register read extern.
 
         Parameters
         ----------
-        lval : `pyp4.packet.FixedInt`
+        lval
             The value in which the read value is to be stored.
-        register_name : `str`
+        register_name
             The name of the register.
-        index : `pyp4.packet.FixedInt`
+        index
             The index of the register from which to read.
 
         """
         lval.val = self.__registers[register_name][int(index)].val
 
-    def register_write(self, register_name, index, rval):
+    def register_write(self, register_name: str, index: FixedInt, rval: FixedInt) -> None:
         """Execute the register write extern.
 
         Parameters
         ----------
-        register_name : `str`
+        register_name
             The name of the register.
-        index : `pyp4.packet.FixedInt`
+        index
             The index of the register into which to write to.
-        rval : `pyp4.packet.FixedInt`
+        rval
             The value that is to be written into the register.
 
         """
@@ -285,19 +301,19 @@ class Register:
 
     Parameters
     ----------
-    bm_register : dict
+    bm_register
         Register definition in BM JSON format.
 
     """
 
-    def __init__(self, bm_register):
+    def __init__(self, bm_register: Dict):
         self.__bm_register = bm_register
 
         self.__entries = []
         for _ in range(self.__bm_register["size"]):
             self.__entries.append(FixedInt(0, self.__bm_register["bitwidth"]))
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> int:
         """Return a register entry."""
         return self.__entries[index]
 
@@ -307,16 +323,16 @@ class V1ModelProcess(Process):
 
     Parameters
     ----------
-    name : `str`
+    name
         The process name.
-    program : `dict`
+    program
         The program to execute in the BM format.
-    packet_io : `pyp4.PacketIO`
+    packet_io
         External packet representation type.
 
     """
 
-    def __init__(self, name, program, packet_io=PacketIO.BINARY):
+    def __init__(self, name: str, program: Dict, packet_io: PacketIO = PacketIO.BINARY):
         extern = V1ModelExtern(program)
         super().__init__(name, program, packet_io, extern)
 

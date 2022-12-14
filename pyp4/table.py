@@ -2,8 +2,10 @@
 
 import copy
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple, Union
 
 from pyp4 import expr
+from pyp4.packet import Bus
 from pyp4.trace import get_logger, Trace
 
 logger = get_logger(__name__)
@@ -16,42 +18,42 @@ class Conditional:
 
     Parameters
     ----------
-    process_name : `str`
+    process_name
         The name of the process running the P4 program.
-    bm_conditional : dict
+    bm_conditional
         Conditional definition in BM JSON format.
 
     """
 
     @Trace(logger)
-    def __init__(self, process_name, bm_conditional):
+    def __init__(self, process_name: str, bm_conditional: Dict):
         self.__process_name = process_name
         self.__bm_conditional = bm_conditional
         self.__expression = bm_conditional["expression"]
         self.logger = None
 
     @property
-    def name(self):
-        """`str`: Name of the conditional."""
+    def name(self) -> str:
+        """Name of the conditional."""
         return self.__bm_conditional["name"]
 
     @property
-    def process_name(self):
-        """`str`: Name of the process running the P4 program this conditional belongs to."""
+    def process_name(self) -> str:
+        """Name of the process running the P4 program this conditional belongs to."""
         return self.__process_name
 
     @Trace(logger)
-    def apply(self, bus):
+    def apply(self, bus: Bus) -> Optional[str]:
         """Evaluate the conditional on the given bus.
 
         Parameters
         ----------
-        bus : `pyp4.packet.Bus`
+        bus
             The metadata + headers bus.
 
         Returns
         -------
-        `str`, optional
+        :
             The name of the next table.
 
         """
@@ -68,37 +70,39 @@ class Conditional:
         )
 
 
+@dataclass
+class _ActionRun:
+    """Information about action to run."""
+    action_id: int
+    action_name: str
+    action_data: list
+
+
+@dataclass
+class _ApplyResult:
+    """Result of table.apply."""
+    hit: bool
+    action_run: _ActionRun
+
+
 class Table:
-    """A P4 match+action table.
-
-    Parameters
-    ----------
-    process_name : `str`
-        The name of the process running the P4 program.
-    bm_table : dict
-        Table definition in BM JSON format.
-    action_id_to_name : dict of {`int` -> `str`}
-        Map of action IDs to their names.
-    action_name_to_id : dict of {`str` -> `int`}
-        Map of action names to their IDs.
-
-    """
-
-    @dataclass
-    class ActionRun:
-        """Information about action to run."""
-        action_id: int
-        action_name: str
-        action_data: list
-
-    @dataclass
-    class ApplyResult:
-        """Result of table.apply."""
-        hit: bool
-        action_run: 'Table.ActionRun'
+    """A P4 match+action table."""
 
     @Trace(logger)
-    def __init__(self, process_name, bm_table, action_id_to_name, action_name_to_id):
+    def __init__(self, process_name: str, bm_table: Dict, action_id_to_name, action_name_to_id):
+        """
+        Parameters
+        ----------
+        process_name : `str`
+            The name of the process running the P4 program.
+        bm_table : dict
+            Table definition in BM JSON format.
+        action_id_to_name : dict of {`int` -> `str`}
+            Map of action IDs to their names.
+        action_name_to_id : dict of {`str` -> `int`}
+            Map of action names to their IDs.
+
+        """
         self.__process_name = process_name
         self.__bm_table = bm_table
         self.__entries = {}
@@ -110,16 +114,16 @@ class Table:
         self.__insert_const_entries()
 
     @property
-    def name(self):
-        """`str`: Name of the table."""
+    def name(self) -> str:
+        """Name of the table."""
         return self.__bm_table["name"]
 
     @property
-    def process_name(self):
-        """`str`: Name of the process running the P4 program this table belongs to."""
+    def process_name(self) -> str:
+        """Name of the process running the P4 program this table belongs to."""
         return self.__process_name
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the table contents to their original state. Const entries will not be removed.
 
         """
@@ -140,17 +144,17 @@ class Table:
             self.__next_handle += 1
 
     @Trace(logger)
-    def apply(self, bus):
+    def apply(self, bus: Bus) -> _ApplyResult:
         """Get the action for the provided packet.
 
         Parameters
         ----------
-        bus : `pyp4.packet.Bus`
+        bus
             The metadata+headers bus.
 
         Returns
         -------
-        `pyp4.table.Table.ApplyResult`
+        :
             The apply result which indicates if it was a hit or miss and the action to run.
 
         """
@@ -167,24 +171,29 @@ class Table:
         )
         return apply_result
 
-    def insert_entry(self, key, action_name, action_data):
+    def insert_entry(
+            self,
+            key: Union[int, Tuple[int, int], List[Union[int, Tuple[int, int]]]],
+            action_name: str,
+            action_data: List[Union[str, int]],
+    ) -> int:
         """Insert a new entry into the table.
 
         Parameters
         ----------
-        key : `int` or tuple of (`int`, `int`) or a list of these types.
+        key
             The match key(s) for this entry. If the key entry's type in the table definition is
-            `exact` the key must be a single integer. If the key type is `lpm` the key is a tuple of
-            (key, prefix length). If the key type is `ternary` the key is a tuple of (key, mask). If
-            the key type is `range` the key is a tuple of (start, end).
-        action_name : `str`
+            ``exact`` the key must be a single integer. If the key type is ``lpm`` the key is a
+            tuple of (key, prefix length). If the key type is ``ternary`` the key is a tuple of
+            (key, mask). If the key type is ``range`` the key is a tuple of (start, end).
+        action_name
             The name of the action to execute on a hit.
-        action_data : list of `str` or `int`
+        action_data
             The data to pass to the action on a hit.
 
         Returns
         -------
-        `int`
+        :
             The handle to the entry which can be used to refer to this entry later.
 
         """
@@ -250,12 +259,12 @@ class Table:
         self.logger.debug(f"{self.logger.name}.insert_entry-entry_handle={entry_handle}")
         return entry_handle
 
-    def remove_entry(self, entry_handle):
+    def remove_entry(self, entry_handle: int) -> None:
         """Remove an entry from the table.
 
         Parameters
         ----------
-        entry_handle : `int`
+        entry_handle
             The table entry handle returned by insert_entry.
 
         """
@@ -268,11 +277,10 @@ class Table:
             # removing anything like we would normally do for an invalid handle.
             self.__entries[entry_handle] = entry
 
-    def __extract_key_value_from_bus(self, bus):
+    def __extract_key_value_from_bus(self, bus: Bus) -> List[Dict]:
         key_value = []
         for key_elem in self.__bm_table["key"]:
             [header_name, field_name] = key_elem["target"]
-            # TODO: Add support for key elem masks
             field = bus.get_hdr(header_name)[field_name]
             key_elem_value = {}
             key_elem_value["match_type"] = key_elem["match_type"]
@@ -280,7 +288,7 @@ class Table:
             key_value.append(key_elem_value)
         return key_value
 
-    def __lookup_key_value(self, key_value):
+    def __lookup_key_value(self, key_value: List[Dict]) -> _ApplyResult:
         # Do a brute-force lookup, checking each entry. In general, simulated soft-switch tables are
         # small and performance is not critical. If performance was more important, we could have
         # represented the table in a more optimized way, e.g. a Patricia tree for LPM tables.
@@ -299,15 +307,15 @@ class Table:
             action_id = self.__bm_table["default_entry"]["action_id"]
             action_data = self.__bm_table["default_entry"]["action_data"]
 
-        return Table.ApplyResult(hit=(best_entry is not None),
-                                 action_run=Table.ActionRun(
-                                     action_id=action_id,
-                                     action_name=self.__action_id_to_name[action_id],
-                                     action_data=action_data,
-                                 ))
+        return _ApplyResult(hit=(best_entry is not None),
+                            action_run=_ActionRun(
+                                action_id=action_id,
+                                action_name=self.__action_id_to_name[action_id],
+                                action_data=action_data,
+                            ))
 
     @staticmethod
-    def __key_value_matches_entry(key_value, entry):
+    def __key_value_matches_entry(key_value: List[Dict], entry: Dict) -> bool:
         match_key = entry["match_key"]
         assert len(key_value) == len(match_key)
         for key_value_elem, match_elem in zip(key_value, match_key):
@@ -316,26 +324,25 @@ class Table:
         return True
 
     @staticmethod
-    def __key_elem_matches_entry(key_value_elem, match_elem):
+    def __key_elem_matches_entry(key_value_elem: Dict, match_elem: Dict) -> bool:
         assert key_value_elem["match_type"] == match_elem["match_type"]
         match_type = key_value_elem["match_type"]
         if match_type == "exact":
             return Table.__exact_key_elem_matches_entry(key_value_elem, match_elem)
-        elif match_type == "lpm":
+        if match_type == "lpm":
             return Table.__lpm_key_elem_matches_entry(key_value_elem, match_elem)
-        elif match_type == "range":
+        if match_type == "range":
             return Table.__range_key_elem_matches_entry(key_value_elem, match_elem)
-        else:
-            raise NotImplementedError
+        raise NotImplementedError
 
     @staticmethod
-    def __exact_key_elem_matches_entry(key_elem, match_elem):
+    def __exact_key_elem_matches_entry(key_elem: Dict, match_elem: Dict) -> bool:
         field_value = key_elem["value"].val
         match_value = int(match_elem["key"], 16)
         return field_value == match_value
 
     @staticmethod
-    def __lpm_key_elem_matches_entry(key_elem, match_elem):
+    def __lpm_key_elem_matches_entry(key_elem: Dict, match_elem: Dict) -> bool:
         field = key_elem["value"]
         field_len = field.bitwidth
         prefix_len = match_elem["prefix_length"]
@@ -345,14 +352,14 @@ class Table:
         return field_value == match_value
 
     @staticmethod
-    def __range_key_elem_matches_entry(key_elem, match_elem):
+    def __range_key_elem_matches_entry(key_elem: Dict, match_elem: Dict) -> bool:
         field_value = key_elem["value"].val
         start_value = int(match_elem["start"], 16)
         end_value = int(match_elem["end"], 16)
         return start_value <= field_value <= end_value
 
     @staticmethod
-    def __prefix_to_mask(field_len, prefix_len):
+    def __prefix_to_mask(field_len: int, prefix_len: int) -> int:
         """Convert a prefix length into a mask (which requires knowing the field length).
 
         """
@@ -363,17 +370,17 @@ class Table:
         mask <<= trailing_zeros
         return mask
 
-    def next_table(self, apply_result):
+    def next_table(self, apply_result: _ApplyResult) -> str:
         """Determine the next table following the given action for this table.
 
         Parameters
         ----------
-        apply_result : `pyp4.table.Table.ApplyResult`
+        apply_result
             The result from running table.apply which we want to follow up.
 
         Returns
         -------
-        `str`
+        :
             The next table name.
 
         """

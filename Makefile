@@ -2,24 +2,34 @@ PYTHON       = python3
 SOURCEDIR    = pyp4
 TESTDIR      = tests
 COVREP       = term
-MINCOV       = 0
+MINCOV       = 100
 
 help:
-	@echo "dev-requirements  Install extra requirements for development."
-	@echo "examples          Run all the examples."
+	@echo "dependencies      Install the package dependencies."
+	@echo "dependencies.dev  Install additional package dependencies for development."
+	@echo "dependencies.docs Install additional package dependencies for documentation."
+	@echo "examples          Run the examples."
 	@echo "tests             Run the tests."
 	@echo "coverage          Print the coverage report."
-	@echo "cov-html          Open the coverage report produced using `make tests COVREP=html`."
+	@echo "cov-html          Open the coverage report produced by 'make tests COVREP=html'."
 	@echo "flake8            Run the flake8 linter."
 	@echo "pylint            Run the pylint linter."
-	@echo "clean             Removes all temporary files (such as .pyc and __pycache__)."
+	@echo "clean             Remove all temporary files."
+	@echo "distclean         Remove all temporary and build files."
 	@echo "verify            Verify the project by running tests and linters."
 
-dev-requirements:
-	@$(PYTHON) -m pip install --upgrade -r dev-requirements.txt
+dependencies:
+	@$(PYTHON) -m pip install --upgrade -e .
+
+dependencies.dev:
+	@$(PYTHON) -m pip install --upgrade -e .[dev]
+
+dependencies.docs:
+	@$(PYTHON) -m pip install --upgrade -e .[docs]
 
 examples:
-	@$(PYTHON) -m examples.run_examples > /dev/null && echo "Examples OK!" || (echo "Examples failed!" && /bin/false)
+	@$(PYTHON) -m examples.run_examples > /dev/null && echo "Examples OK!" || \
+	(echo "Examples failed!" && /bin/false)
 
 tests:
 	@$(PYTHON) -m pytest -v --cov=${SOURCEDIR} --cov-report=${COVREP} ${TESTDIR}
@@ -28,7 +38,7 @@ coverage:
 	@$(PYTHON) -m coverage report --fail-under=${MINCOV}
 
 cov-html:
-	xdg-open htmlcov/index.html
+	@xdg-open htmlcov/index.html
 
 flake8:
 	@$(PYTHON) -m flake8 ${SOURCEDIR} ${TESTDIR}
@@ -43,9 +53,18 @@ clean:
 	@/usr/bin/rm -f .coverage
 	@/usr/bin/rm -rf htmlcov
 
+distclean: clean
+	@/usr/bin/rm -rf *.egg-info
+	@/usr/bin/rm -rf build
+	@/usr/bin/rm -rf dist
+
 _verified:
 	@echo "The package has been successfully verified"
 
-verify: clean dev-requirements tests coverage flake8 pylint _verified
+verify: clean dependencies dependencies.dev tests examples coverage flake8 pylint _verified
 
-.PHONY: dev-requirements examples tests coverage cov-html flake8 pylint clean verify _verified
+build: distclean verify
+	@$(PYTHON) -m build
+
+.PHONY: dependencies dependencies.dev dependencies.docs examples tests coverage cov-html flake8 \
+	pylint clean distclean verify _verified

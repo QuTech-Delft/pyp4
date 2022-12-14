@@ -125,12 +125,10 @@ def __expr_field(bus, expr, _runtime_data, is_lval):
     if is_lval:
         header = bus.get_hdr(header_instance_name)
         return header[field_member_name]
-    else:
-        if field_member_name == "$valid$":
-            return bus.packet.is_valid(header_instance_name)
-        else:
-            header = bus.get_hdr(header_instance_name)
-            return header[field_member_name].val
+    if field_member_name == "$valid$":
+        return bus.packet.is_valid(header_instance_name)
+    header = bus.get_hdr(header_instance_name)
+    return header[field_member_name].val
 
 
 def __expr_hexstr(_bus, expr, _runtime_data, _is_lval):
@@ -155,12 +153,10 @@ def __expr_string(_bus, expr, _runtime_data, _is_lval):
 
 
 def __expr_header_stack(_bus, _expr, _runtime_data, _is_lval):
-    # TODO
     raise NotImplementedError
 
 
 def __expr_stack_field(_bus, _expr, _runtime_data, _is_lval):
-    # TODO
     raise NotImplementedError
 
 
@@ -339,12 +335,10 @@ def __oper_bitwise_not(bus, expr, runtime_data):
 
 
 def __oper_is_valid(_bus, _expr, _runtime_data):
-    # TODO
     raise NotImplementedError
 
 
 def __oper_is_valid_union(_bus, _expr, _runtime_data):
-    # TODO
     raise NotImplementedError
 
 
@@ -361,17 +355,14 @@ def __oper_bool_to_data(bus, expr, runtime_data):
 
 
 def __oper_two_comp_mod(_bus, _expr, _runtime_data):
-    # TODO
     raise NotImplementedError
 
 
 def __oper_sat_cast(_bus, _expr, _runtime_data):
-    # TODO
     raise NotImplementedError
 
 
 def __oper_usat_cast(_bus, _expr, _runtime_data):
-    # TODO
     raise NotImplementedError
 
 
@@ -386,32 +377,26 @@ def __oper_ternary(bus, expr, runtime_data):
 
 
 def __oper_deref_header_stack(_bus, _expr, _runtime_data):
-    # TODO
     raise NotImplementedError
 
 
 def __oper_last_stack_index(_bus, _expr, _runtime_data):
-    # TODO
     raise NotImplementedError
 
 
 def __oper_size_stack(_bus, _expr, _runtime_data):
-    # TODO
     raise NotImplementedError
 
 
 def __oper_access_field(_bus, _expr, _runtime_data):
-    # TODO
     raise NotImplementedError
 
 
 def __oper_dereference_union_stack(_bus, _expr, _runtime_data):
-    # TODO
     raise NotImplementedError
 
 
 def __oper_access_union_header(_bus, _expr, _runtime_data):
-    # TODO
     raise NotImplementedError
 
 
@@ -442,7 +427,6 @@ OPER_DISPATCHES = {
     "sat_cast": __OperDispatch(__oper_sat_cast, 1),
     "usat_cast": __OperDispatch(__oper_usat_cast, 1),
     "?": __OperDispatch(__oper_ternary, 3),
-    # TODO: check nr args in all of the following
     "dereference_header_stack": __OperDispatch(__oper_deref_header_stack, 1),
     "last_stack_index": __OperDispatch(__oper_last_stack_index, 1),
     "size_stack": __OperDispatch(__oper_size_stack, 1),
