@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pyp4"
 authors=[{name = "Wojciech Kozlowski", email = "w.kozlowski@tudelft.nl"}]
 maintainers=[{name = "Wojciech Kozlowski", email = "w.kozlowski@tudelft.nl"}]
-description = "A library for running P4 pipelines in the BMv2 JSONformat in Python"
+description = "A library for running P4 pipelines in the BMv2 JSON format in Python"
 readme = "README.md"
 license = { file = "LICENSE" }
 classifiers = [
