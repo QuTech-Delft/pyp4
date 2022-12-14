@@ -10,8 +10,6 @@ Welcome to PyP4's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   modules/pyp4.rst
-
    modules.rst
    processors.rst
 
