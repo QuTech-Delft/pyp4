@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from itertools import filterfalse, tee
+from typing import Any, Dict, List, Optional
 
 from pyp4 import PacketIO
 from pyp4.action import Action
@@ -11,7 +12,7 @@ from pyp4.parser import Parser
 from pyp4.block import Block
 
 
-def partition(pred, iterable):
+def _partition(pred, iterable):
     """Use a predicate to partition entries into false entries and true entries"""
     # partition(is_odd, range(10)) --> 0 2 4 6 8   and  1 3 5 7 9
     it1, it2 = tee(iterable)
@@ -29,21 +30,19 @@ class Process(ABC):
 
     Parameters
     ----------
-    name : `str`
+    name
         The process name.
-    program : `dict`
+    program
         The program to execute in the BM format.
-    packet_io : `pyp4.PacketIO`
+    packet_io
         External packet representation type.
-    extern : `<processor specific ExternClass>`, optional
+    extern : <processor specific ExternClass>, optional
         The processor's extern object for extern calls.
 
     """
     # pylint: disable=too-many-instance-attributes
     # Reason: this is the central class of PyP4 - it needs to hold a lot.
 
-    # TODO: @atomic annotation support
-    #
     # P4 spec only guarantees that individual extern calls are executed atomically. Multiple extern
     # operations do not have such a guarantee. Therefore, the P4 spec allows for an @atomic
     # annotation to indicate blocks that need to be executed atomically. However, it is not clear
@@ -54,7 +53,13 @@ class Process(ABC):
 
     # Make __init__ abstract to force derived classes to provide the extern.
     @abstractmethod
-    def __init__(self, name, program, packet_io=PacketIO.BINARY, extern=None):
+    def __init__(
+            self,
+            name: str,
+            program: Dict,
+            packet_io: PacketIO = PacketIO.BINARY,
+            extern: Optional[Any] = None,
+    ):
         self.__name = name
 
         # Validate the program.
@@ -64,7 +69,7 @@ class Process(ABC):
         struct_types = {struct_t["name"]: struct_t for struct_t in program["header_types"]}
 
         # Split the struct types and definitions into metadata and headers.
-        headers, metadata = partition(lambda hdr: hdr["metadata"], program["headers"])
+        headers, metadata = _partition(lambda hdr: hdr["metadata"], program["headers"])
 
         self.__header_defs = {hdr["name"]: hdr for hdr in headers}
         self.__header_types = {
@@ -112,36 +117,41 @@ class Process(ABC):
         }
 
     @property
-    def name(self):
-        """`str`: The name of the process."""
+    def name(self) -> str:
+        """The name of the process."""
         return self.__name
 
     @staticmethod
     @abstractmethod
-    def _validate_program(program):
+    def _validate_program(program: Dict) -> None:
         """Validate the program.
 
         Parameters
         ----------
-        process : `dict`
+        process
             The program to validate.
 
         """
         raise NotImplementedError
 
     @staticmethod
-    def _validate_program_pipeline(program, parsers, blocks, deparsers):
+    def _validate_program_pipeline(
+            program: Dict,
+            parsers: List[str],
+            blocks: List[str],
+            deparsers: List[str],
+    ) -> None:
         """Validate the program pipeline elements.
 
         Parameters
         ----------
-        progam : `dict`
+        progam
             The program to validate.
-        parsers : `list` of `str`
+        parsers
             List of parser names that the architecture requires the program to have.
-        blocks : `list` of `str`
+        blocks
             List of block names that the architecture requires the program to have.
-        deparser : `list` of `str`
+        deparser
             List of deparser names that the architecture requires the program to have.
 
         """
@@ -150,16 +160,16 @@ class Process(ABC):
         Process.__validate_program_pipeline_element("deparser", deparsers, program)
 
     @staticmethod
-    def __validate_program_pipeline_element(name, required, program):
+    def __validate_program_pipeline_element(name: str, required: List[str], program: Dict) -> None:
         """Validate a particular element type (e.g. parser, block) of the program.
 
         Parameters
         ----------
-        name : `str`
+        name
             The name of the element type.
-        required : `list` of `str`
+        required
             List of element names that the architecture requires the program to have.
-        progam : `dict`
+        progam
             The program to validate.
 
         """
@@ -176,7 +186,7 @@ class Process(ABC):
                                 f"Provided program has {provided}")
 
     @staticmethod
-    def __validate_packet_io(header_types, packet_io):
+    def __validate_packet_io(header_types: Dict, packet_io: PacketIO):
         if packet_io == PacketIO.BINARY:
             # We do not support headers that do not divide nicely into 8-bit bytes.
             for hdr_t in header_types.values():
@@ -190,19 +200,19 @@ class Process(ABC):
             assert packet_io == PacketIO.STACK
             # NO-OP: everything is okay
 
-    def header(self, header_name, metadata=False):
+    def header(self, header_name: str, metadata: bool = False) -> Header:
         """Get a new instance of a header by its name.
 
         Parameters
         ----------
-        header_name : `str`
+        header_name
             The name of the header.
-        metadata : `bool`, optional
+        metadata : optional
             True if this is actually a metadata "header".
 
         Returns
         -------
-        `pyp4.packet.Header`
+        :
             A new instance of that header.
 
         """
@@ -215,55 +225,55 @@ class Process(ABC):
 
         return Header(types[header_type]["fields"])
 
-    def metadata(self):
+    def metadata(self) -> Dict[str, Header]:
         """Get a new instance of the program metadata dictionary.
 
         Returns
         -------
-        `dict`
-            A dictionary of metadata `str` -> `pyp4.packet.Header`.
+        :
+            A dictionary of metadata str -> `~pyp4.packet.Header`.
 
         """
         return {name: self.header(name, True) for name in self.__metadata_defs}
 
-    def packet(self):
+    def packet(self) -> Packet:
         """Get a new instance of a packet.
 
         Returns
         -------
-        `pyp4.packet.Packet`
+        :
             A new instance of the internal representation of a packet.
 
         """
         return Packet(self.__header_types, self.__header_defs)
 
-    def bus(self):
+    def bus(self) -> Bus:
         """Get a new instance of a bus.
 
         Returns
         -------
-        `pyp4.packet.Bus`
+        :
             A new instance of the internal metadata + headers bus.
 
         """
         return Bus(self.metadata(), self.packet())
 
     @property
-    def parsers(self):
-        """dict of {`str` -> `pyp4.parser.Parser`}: Process parsers keyed on their names."""
+    def parsers(self) -> Dict[str, Parser]:
+        """Process parsers keyed on their names."""
         return self.__parsers
 
     @property
-    def blocks(self):
-        """dict of {`str` -> `pyp4.block.Block`}: Process blocks keyed on their names."""
+    def blocks(self) -> Dict[str, Block]:
+        """Process blocks keyed on their names."""
         return self.__blocks
 
     @property
-    def deparsers(self):
-        """dict of {`str` -> `pyp4.deparser.Deparser`}: Process deparsers keyed on their names."""
+    def deparsers(self) -> Dict[str, Deparser]:
+        """Process deparsers keyed on their names."""
         return self.__deparsers
 
     @property
-    def enums(self):
-        """dict of `dict`: Program enums."""
+    def enums(self) -> Dict:
+        """Program enums."""
         return self.__enums

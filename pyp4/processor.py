@@ -1,6 +1,10 @@
 """P4 processor framework definition."""
 
 from abc import ABC, abstractmethod
+from typing import Any, List, Optional, Tuple
+
+from pyp4.process import Process
+from pyp4.table import Table
 
 
 class Processor(ABC):
@@ -9,60 +13,58 @@ class Processor(ABC):
     A processor defines the packet processing pipeline. That is, how do the programmable blocks
     defined in the P4 program connect to each other and the fixed-function environment.
 
-    This `pyp4.processor.Processor` class is an abstract base class for P4 processors. A concrete
-    processor subclass must be provided for each P4 architecture.
+    This `Processor` class is an abstract base class for P4 processors. A concrete processor
+    subclass must be provided for each P4 architecture.
 
     A processor relies on a runtime object to provide it with access to a runtime (e.g. a network
     simulator runtime).
 
     Parameters
     ----------
-    runtime : `<processor specific Runtime>`, optional
+    runtime : <processor specific Runtime>, optional
         The simulated device's runtime.
-    process : `pyp4.process.Process`
-        The P4 process to run on this processor.
 
     """
 
-    def __init__(self, runtime=None):
+    def __init__(self, runtime: Optional[Any] = None):
         self.__process = None
         self.__runtime = runtime
 
     @property
-    def _process(self):
-        """`pyp4.process.Process`: The P4 process running on this processor."""
+    def _process(self) -> Process:
+        """The P4 process running on this processor."""
         if self.__process is None:
             raise RuntimeError("The processor is currently not running any process")
         return self.__process
 
     @property
-    def _runtime(self):
-        """`<processor specific Runtime>`: The simulated device's runtime."""
+    def _runtime(self) -> Any:
+        """<processor specific Runtime>: The simulated device's runtime."""
         return self.__runtime
 
-    def load(self, process):
+    def load(self, process: Process) -> 'Processor':
         """Load a process onto the processor possibly replacing the current one.
 
         Parameters
         ----------
-        process : `pyp4.process.Process`
+        process
             The P4 process to run on this processor.
 
         Returns
         -------
-        `pyp4.processor.Processor`
+        :
             For convenience the processor itself is returned.
 
         """
         self.__process = process
         return self
 
-    def unload(self):
+    def unload(self) -> Process:
         """Unload the current process from the processor.
 
         Returns
         -------
-        `pyp4.process.Process`
+        :
             The process that was unloaded.
 
         """
@@ -70,21 +72,21 @@ class Processor(ABC):
         self.__process = None
         return process
 
-    def table(self, block, name):
+    def table(self, block: str, name: str) -> Table:
         """Access a table in the running P4 process.
 
         Parameters
         ----------
-        block : `str`
+        block
             The name of the block in which the table is defined. Note that the name is defined by
             the architecture, not the program itself. E.g. the ingress block is called "ingress"
             regardless of how that block is called in the program.
-        name : `str`
+        name
             The name of the table as defined by the program.
 
         Returns
         -------
-        `pyp4.table.Table`
+        :
              The table.
 
         """
@@ -95,22 +97,22 @@ class Processor(ABC):
         return self.__process.blocks[block].tables[name]
 
     @abstractmethod
-    def input(self, port_in_meta, packet_in):
+    def input(self, port_in_meta: Any, packet_in: Any) -> List[Tuple[Any, Any]]:
         """Process an incoming packet.
 
         The input packet is consumed and the output packets are brand new object.
 
         Parameters
         ----------
-        port_in_meta : `<processor specific PortMeta>`
+        port_in_meta : <processor specific PortMeta>
             Input port metadata.
-        packet_in : `<process specific PacketClass>`
+        packet_in : <process specific PacketClass>
             The input packet.
 
         Returns
         -------
-        list of tuple of (`<processor specific PortMeta>`, `<process specific PacketClass>`)
-            One tuple of the output port metadata and the packet for each output packet
+        List[Tuple[<processor specific PortMeta>, <process specific PacketClass>]]
+            A tuple of the output port metadata and the packet for each output packet
 
         """
         raise NotImplementedError

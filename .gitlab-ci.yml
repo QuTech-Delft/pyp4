@@ -4,7 +4,11 @@
 image: python:3.8
 
 before_script:
+  - python3 -m pip install virtualenv
+  - if [ ! -d venv ]; then python3 -m virtualenv venv; fi
   - source venv/bin/activate
+  - make dependencies
+  - make dependencies.dev
 
 .default:
   only:
@@ -14,32 +18,11 @@ before_script:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
       - venv/
-    policy: pull
-
-stages:
-  - prepare
-  - test
-  - lint
-
-# The prepare job exists to ensure the cache exists for the subsequent jobs.
-# Otherwise if the first job fails, all dependencies would have to be
-# re-downloaded.
-prepare:
-  extends: .default
-  stage: prepare
-  before_script:
-    - python3 -m pip install virtualenv
-    - if [ ! -d venv ]; then python3 -m virtualenv venv; fi
-    - source venv/bin/activate
-  script:
-    - make dev-requirements
-  cache:
     policy: pull-push
 
-examples:
-  extends: .default
-  stage: test
-  script: make examples
+stages:
+  - test
+  - lint
 
 tests:
   extends: .default
@@ -49,21 +32,28 @@ tests:
     paths:
       - .coverage
     expire_in: 1 week
+  needs: []
 
 coverage:
   extends: .default
-  stage: lint
+  stage: test
   script: make coverage MINCOV=100
   needs: ["tests"]
+
+examples:
+  extends: .default
+  stage: test
+  script: make examples
+  needs: []
 
 flake8:
   extends: .default
   stage: lint
   script: make flake8
-  needs: ["prepare"]
+  needs: []
 
 pylint:
   extends: .default
   stage: lint
   script: make pylint
-  needs: ["prepare"]
+  needs: []
